@@ -16,37 +16,67 @@ firstFrame = None
 
 # tracked clouds 
 W = 500
+H = 900
+
+
+# blue range
+lower_blue = np.array([0, 10, 96])
+upper_blue = np.array([90, 200, 255])
+
+# white range
+lower_white = np.array([230, 230, 230])
+upper_white = np.array([240, 240, 240])
+
+# green range
+lower_green = np.array([0, 100, 0])
+upper_green = np.array([80, 255, 40])
+
+# red range
+lower_red = np.array([37, 0, 0])
+upper_red = np.array([255,100, 3])
+
+# yellow range
+lower_yellow = np.array([79, 79, 0])
+upper_yellow = np.array([255,255, 0])
+
 while True:
     time.sleep(0.01)
     frame = vs.read()
+
+
     if frame is None:
         break
     clouds = []
     # Resize Frame
     frame = imutils.resize(frame[1], width=W)
     # cut frame
-    frame = frame[0:W+60, 0:W]
+    frame = frame[60:frame.shape[0]-60, 50:frame.shape[1]-50]
+
+
     # Convert the frame to grayscale, blur it, and detect edges
     full_color = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-    # Filter by color
-    lower_blue = np.array([0, 10, 96])
-    upper_blue = np.array([56, 200, 255])
+
     # preparing the mask to overlay
-    mask = cv2.inRange(full_color, lower_blue, upper_blue)
+    mask_blue = cv2.inRange(full_color, lower_blue, upper_blue)
+    mask_white = cv2.inRange(full_color, lower_white, upper_white )
+    mask_green = cv2.inRange(full_color, lower_green, upper_green )
+    mask_red = cv2.inRange(full_color, lower_red, upper_red )
+    mask_yellow = cv2.inRange(full_color, lower_yellow, upper_yellow )
+    mask = mask_blue+mask_green+mask_yellow+mask_red
     # The black region in the mask has the value of 0,
     # so when multiplied with original image removes all non-blue regions
     result = cv2.bitwise_and(frame, frame, mask = mask)
 
     gray = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
     # filter noise
-    gray = cv2.GaussianBlur(gray, (39,39), 0)
+    gray = cv2.GaussianBlur(gray, (27,27), 0)
 
     if firstFrame is None:
         firstFrame = gray
         continue
 
-    thresh = cv2.threshold(gray, 3, 100, cv2.THRESH_BINARY)[1] # Tresh 
+    thresh = cv2.threshold(gray, 0, 100, cv2.THRESH_BINARY)[1] # Tresh 
     thresh = cv2.dilate(thresh, None, iterations=2)
 
     # Canny for edges detection 
